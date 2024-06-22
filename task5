@@ -1,0 +1,102 @@
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key'
+socketio = SocketIO(app)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@socketio.on('message')
+def handle_message(message):
+    print('Message:', message)
+    emit('message', message, broadcast=True)
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Application</h1>
+        <div id="messages"></div>
+        <form id="form" action="">
+            <input type="text" id="input" autocomplete="off">
+            <button>Send</button>
+        </form>
+    </div>
+</body>
+</html>
+document.addEventListener('DOMContentLoaded', () => {
+    var socket = io();
+
+    var form = document.getElementById('form');
+    var input = document.getElementById('input');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.value) {
+            socket.emit('message', input.value);
+            input.value = '';
+        }
+    });
+
+    socket.on('message', function(msg) {
+        var item = document.createElement('div');
+        item.textContent = msg;
+        document.getElementById('messages').appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+});
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+input[type="text"], button {
+    padding: 10px;
+    font-size: 16px;
+    margin: 10px;
+}
+
+button {
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+h1 {
+    text-align: center;
+}
+
+#messages {
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
