@@ -1,0 +1,62 @@
+import speech_recognition as sr
+import pyttsx3
+import wikipedia
+import datetime
+
+# Initialize the speech recognizer and text-to-speech engine
+recognizer = sr.Recognizer()
+engine = pyttsx3.init()
+
+# Function to convert text to speech
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+# Function to recognize speech
+def listen():
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+
+        try:
+            print("Recognizing...")
+            query = recognizer.recognize_google(audio, language='en-us')
+            print(f"User said: {query}\n")
+        except Exception as e:
+            print("Sorry, I did not get that. Please say it again.")
+            return ""
+
+        return query.lower()
+
+# Function to respond based on voice commands
+def respond(query):
+    if 'hello' in query:
+        speak("Hello! How can I help you?")
+    elif 'what is your name' in query:
+        speak("I am your assistant. You can call me ChatGPT.")
+    elif 'what is the time' in query:
+        now = datetime.datetime.now().strftime("%H:%M:%S")
+        speak(f"The current time is {now}")
+    elif 'tell me about' in query:
+        query = query.replace("tell me about", "")
+        try:
+            result = wikipedia.summary(query, sentences=2)
+            speak("According to Wikipedia, ")
+            speak(result)
+        except wikipedia.exceptions.PageError:
+            speak("Sorry, I could not find any information on that.")
+        except wikipedia.exceptions.DisambiguationError:
+            speak("There are multiple results matching your query. Please be more specific.")
+        except Exception as e:
+            speak("Sorry, I encountered an error while fetching the information.")
+
+# Main program loop
+if __name__ == "__main__":
+    speak("Initializing assistant...")
+    while True:
+        query = listen()
+        if 'exit' in query:
+            speak("Exiting assistant...")
+            break
+        respond(query)
